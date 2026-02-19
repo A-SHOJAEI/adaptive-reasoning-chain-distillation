@@ -1,0 +1,192 @@
+{
+  "experiment": {
+    "name": "adaptive-reasoning-chain-distillation",
+    "description": "Distilling chain-of-thought reasoning from GPT-2 Medium into DistilGPT-2 using adaptive difficulty-based curriculum learning on MMLU",
+    "date": "2026-02-19",
+    "status": "completed"
+  },
+  "environment": {
+    "gpu": "NVIDIA GeForce RTX 3090 (23.6 GB)",
+    "pytorch_version": "2.10.0+cu128",
+    "cuda_available": true,
+    "fp16": true,
+    "device": "cuda"
+  },
+  "models": {
+    "teacher": {
+      "name": "gpt2-medium",
+      "parameters": "354.8M",
+      "role": "frozen",
+      "description": "GPT-2 Medium used as frozen teacher for generating reasoning chains and soft targets"
+    },
+    "student": {
+      "name": "distilgpt2",
+      "total_parameters": "81.9M",
+      "trainable_parameters": "81.9M",
+      "role": "trainable",
+      "description": "DistilGPT-2 trained to approximate teacher's reasoning via knowledge distillation"
+    },
+    "compression_ratio": "4.33x"
+  },
+  "dataset": {
+    "name": "cais/mmlu",
+    "split": "auxiliary_train",
+    "total_available": "~100K",
+    "samples_used": 10000,
+    "difficulty_bins": 10,
+    "reasoning_chains": {
+      "total": 10000,
+      "loaded_from_cache": 10000,
+      "newly_generated": 0
+    }
+  },
+  "difficulty_scoring": {
+    "method": "teacher_predictive_entropy",
+    "entropy_range": [1.479, 5.881],
+    "entropy_mean": 3.963
+  },
+  "hyperparameters": {
+    "epochs": 10,
+    "batch_size": 2,
+    "gradient_accumulation_steps": 4,
+    "effective_batch_size": 8,
+    "learning_rate": 5e-5,
+    "weight_decay": 0.01,
+    "max_grad_norm": 1.0,
+    "warmup_ratio": 0.06,
+    "scheduler": "cosine",
+    "max_seq_length": 512,
+    "distillation_temperature": 2.0,
+    "kl_weight": 0.7,
+    "ce_weight": 0.3
+  },
+  "curriculum": {
+    "strategy": "linear",
+    "initial_fraction": 0.3,
+    "final_fraction": 1.0,
+    "warmup_epochs": 1
+  },
+  "training_summary": {
+    "total_training_time_hours": 1.61,
+    "estimated_total_steps": 12500,
+    "best_metric": "difficulty_calibration",
+    "best_metric_value": 0.5815,
+    "best_metric_epoch": 8,
+    "final_distillation_loss": 1.3716,
+    "final_kl_loss": 1.1351,
+    "final_ce_loss": 1.9234,
+    "loss_reduction_percent": 38.72
+  },
+  "epoch_results": [
+    {
+      "epoch": 1,
+      "distillation_loss": 2.2384,
+      "kl_loss": 1.7912,
+      "ce_loss": 3.2818,
+      "difficulty_calibration": 0.4166,
+      "curriculum_fraction": 0.300,
+      "samples": 3000
+    },
+    {
+      "epoch": 2,
+      "distillation_loss": 1.6560,
+      "kl_loss": 1.3872,
+      "ce_loss": 2.2831,
+      "difficulty_calibration": 0.4326,
+      "curriculum_fraction": 0.300,
+      "samples": 3000
+    },
+    {
+      "epoch": 3,
+      "distillation_loss": 1.5718,
+      "kl_loss": 1.3176,
+      "ce_loss": 2.1649,
+      "difficulty_calibration": 0.4554,
+      "curriculum_fraction": 0.378,
+      "samples": 3777
+    },
+    {
+      "epoch": 4,
+      "distillation_loss": 1.5159,
+      "kl_loss": 1.2700,
+      "ce_loss": 2.0897,
+      "difficulty_calibration": 0.4814,
+      "curriculum_fraction": 0.456,
+      "samples": 4555
+    },
+    {
+      "epoch": 5,
+      "distillation_loss": 1.4807,
+      "kl_loss": 1.2406,
+      "ce_loss": 2.0408,
+      "difficulty_calibration": 0.5128,
+      "curriculum_fraction": 0.533,
+      "samples": 5333
+    },
+    {
+      "epoch": 6,
+      "distillation_loss": 1.4524,
+      "kl_loss": 1.2156,
+      "ce_loss": 2.0050,
+      "difficulty_calibration": 0.5501,
+      "curriculum_fraction": 0.611,
+      "samples": 6111
+    },
+    {
+      "epoch": 7,
+      "distillation_loss": 1.4250,
+      "kl_loss": 1.1927,
+      "ce_loss": 1.9671,
+      "difficulty_calibration": 0.5779,
+      "curriculum_fraction": 0.689,
+      "samples": 6888
+    },
+    {
+      "epoch": 8,
+      "distillation_loss": 1.4006,
+      "kl_loss": 1.1716,
+      "ce_loss": 1.9351,
+      "difficulty_calibration": 0.5815,
+      "curriculum_fraction": 0.767,
+      "samples": 7666
+    },
+    {
+      "epoch": 9,
+      "distillation_loss": 1.3851,
+      "kl_loss": 1.1547,
+      "ce_loss": 1.9227,
+      "difficulty_calibration": 0.5739,
+      "curriculum_fraction": 0.844,
+      "samples": 8444
+    },
+    {
+      "epoch": 10,
+      "distillation_loss": 1.3716,
+      "kl_loss": 1.1351,
+      "ce_loss": 1.9234,
+      "difficulty_calibration": 0.5590,
+      "curriculum_fraction": 0.922,
+      "samples": 9222
+    }
+  ],
+  "checkpoints": {
+    "best": {
+      "path": "checkpoints/best",
+      "epoch": 8,
+      "difficulty_calibration": 0.5815,
+      "contents": ["student_model/", "training_state.pt"]
+    },
+    "epoch_checkpoints": [
+      "checkpoints/epoch_0",
+      "checkpoints/epoch_1",
+      "checkpoints/epoch_2",
+      "checkpoints/epoch_3",
+      "checkpoints/epoch_4",
+      "checkpoints/epoch_5",
+      "checkpoints/epoch_6",
+      "checkpoints/epoch_7",
+      "checkpoints/epoch_8",
+      "checkpoints/epoch_9"
+    ]
+  }
+}
