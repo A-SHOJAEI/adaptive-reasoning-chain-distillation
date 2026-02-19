@@ -1,0 +1,65 @@
+# Adaptive Reasoning Chain Distillation - Default Configuration
+# =============================================================
+
+# Model configuration
+model:
+  teacher:
+    name: "gpt2-medium"            # 345M params, frozen during training
+    max_new_tokens: 64              # Max tokens for reasoning chain generation
+    temperature: 0.7                # Sampling temperature for chain generation
+    top_p: 0.9                      # Nucleus sampling threshold
+  student:
+    name: "distilgpt2"             # 82M params, trainable
+  max_seq_length: 512               # Maximum sequence length for both models
+
+# Dataset configuration
+data:
+  dataset_name: "cais/mmlu"
+  split: "auxiliary_train"          # ~100K samples
+  difficulty_bins: 10               # Number of curriculum difficulty bins
+  num_workers: 4                    # DataLoader workers
+  cache_dir: null                   # HuggingFace cache dir (null = default)
+  max_samples: 10000                # Limit samples (10K for reasonable training time)
+  reasoning_cache_dir: "cache/reasoning_chains"  # Cache generated reasoning chains
+
+# Training configuration
+training:
+  epochs: 10
+  batch_size: 2
+  gradient_accumulation_steps: 4    # Effective batch size = 8
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  warmup_ratio: 0.06                # Fraction of total steps for LR warmup
+  scheduler: "cosine"               # Learning rate scheduler type
+  fp16: true                        # Mixed precision training
+
+# Loss configuration
+loss:
+  kl_temperature: 2.0              # Temperature for KL-divergence softmax
+  kl_weight: 0.7                   # Weight for KL-divergence loss
+  ce_weight: 0.3                   # Weight for cross-entropy loss on reasoning tokens
+
+# Curriculum configuration
+curriculum:
+  strategy: "linear"               # Progression strategy: linear, exponential, step
+  warmup_epochs: 1                 # Epochs before curriculum kicks in (train on easy only)
+  initial_fraction: 0.3            # Fraction of easiest samples to start with
+  final_fraction: 1.0              # Fraction of samples at end of training
+
+# Checkpoint configuration
+checkpoint:
+  dir: "checkpoints"
+  save_every_epoch: true
+  save_best: true                  # Save best model based on validation metric
+  metric: "difficulty_calibration" # Metric to track for best model
+
+# Evaluation configuration
+evaluation:
+  eval_every_steps: 500            # Evaluate every N training steps
+  num_eval_samples: 1000           # Number of samples for evaluation
+
+# Logging
+logging:
+  log_every_steps: 50              # Log metrics every N steps
+  verbose: true
